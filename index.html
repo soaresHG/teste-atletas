@@ -493,11 +493,17 @@
     }
 
     function carregarVideo(index) {
-      videoAtualIndex = index;
-      player.src = videos[index];
-      player.currentTime = 0;
-      player.play();
-    }
+  videoAtualIndex = index;
+  player.src = videos[index];
+  player.currentTime = 0;
+  
+  // Tenta reproduzir o vídeo e captura erros caso o link esteja errado
+  player.play().catch(error => {
+    console.error("Erro ao carregar o vídeo:", error);
+    loadingBanner.innerText = "Erro ao carregar o vídeo. Verifique o caminho/ficheiro.";
+    loadingBanner.style.background = "rgba(255, 0, 0, 0.9)";
+  });
+}
 
     // Monitora o tempo do vídeo atual
     player.addEventListener('timeupdate', () => {
