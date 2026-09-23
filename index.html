@@ -293,6 +293,7 @@
     <div class="game-container">
       <div id="loadingBanner" class="loading-banner">Carregando trecho do vídeo...</div>
       
+      <!-- O VIDEO FOI CORRIGIDO (SEM TAG <SOURCE> TRAVANDO) -->
       <video id="player" controls playsinline webkit-playsinline preload="auto"></video>
 
       <!-- Camada de Decisão Transparente -->
@@ -321,7 +322,7 @@
   <script>
     const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbzd3OP6iUpV_zJGOkQwjOZU0EQ8JyEo1canWwlOZBFLFJ7V_MHBd9yHtG88ymLIxT5T7A/exec";
 
-    // --- LISTA DOS 5 ARQUIVOS DE VÍDEO DIVIDIDOS ---
+    // --- ARQUIVOS DE VÍDEO NO REPOSITÓRIO GITHUB ---
     const videos = [
       "parte1.mp4",
       "parte2.mp4",
@@ -330,7 +331,7 @@
       "parte5.mp4"
     ];
 
-    // --- CADA PERGUNTA APONTA PARA QUAL PARTE DO VÍDEO E QUAL SEGUNDO DESSA PARTE ---
+    // --- MAPEAMENTO DAS PERGUNTAS PARA CADA TRECHO ---
     const perguntas = [
       {
         videoIndex: 0, // parte1.mp4
@@ -357,7 +358,7 @@
         ]
       },
       {
-        videoIndex: 2, // parte3.mp4 (segunda pergunta nesta mesma parte)
+        videoIndex: 2, // parte3.mp4
         gatilho: 20.15,
         opcoes: [
           { texto: "Ficar baixo e pisar na linha", correta: true },
@@ -410,6 +411,7 @@
     const optionsContainer = document.getElementById('optionsContainer');
     const loadingBanner = document.getElementById('loadingBanner');
 
+    // Manipulação de Buffering
     player.addEventListener('waiting', () => {
       loadingBanner.style.display = 'block';
       if (timerInterval) clearInterval(timerInterval);
@@ -493,30 +495,21 @@
     }
 
     function carregarVideo(index) {
-  videoAtualIndex = index;
-  player.src = videos[index];
-  player.currentTime = 0;
-  
-  // Tenta reproduzir o vídeo e captura erros caso o link esteja errado
-  player.play().catch(error => {
-    console.error("Erro ao carregar o vídeo:", error);
-    loadingBanner.innerText = "Erro ao carregar o vídeo. Verifique o caminho/ficheiro.";
-    loadingBanner.style.background = "rgba(255, 0, 0, 0.9)";
-  });
-}
+      videoAtualIndex = index;
+      player.src = videos[index];
+      player.load(); // Força o elemento a recarregar o novo vídeo
+      player.play().catch(err => console.log("Aguardando interação para reprodução."));
+    }
 
-    // Monitora o tempo do vídeo atual
     player.addEventListener('timeupdate', () => {
       if (perguntaAtual < perguntas.length && !aguardandoResposta) {
         const pAtual = perguntas[perguntaAtual];
-        // Verifica se a pergunta pertence a esta parte do vídeo
         if (pAtual.videoIndex === videoAtualIndex && player.currentTime >= pAtual.gatilho) {
           iniciarFaseDecisao();
         }
       }
     });
 
-    // Quando uma das 5 partes do vídeo termina de rodar
     player.addEventListener('ended', () => {
       if (videoAtualIndex + 1 < videos.length) {
         carregarVideo(videoAtualIndex + 1);
@@ -592,7 +585,6 @@
           document.getElementById('displayQuestion').innerText = `${perguntaAtual + 1} / ${perguntas.length}`;
           const proximaPergunta = perguntas[perguntaAtual];
           
-          // Se a próxima pergunta for em outro trecho do vídeo, carrega o novo arquivo
           if (proximaPergunta.videoIndex !== videoAtualIndex) {
             carregarVideo(proximaPergunta.videoIndex);
           } else {
@@ -600,7 +592,6 @@
           }
         } else {
           aguardandoResposta = false;
-          // Se já respondeu a última pergunta, espera o vídeo acabar para enviar
         }
       }, 2000);
     }
