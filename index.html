@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Treinamento de Tomada de Decisão - Atletas</title>
+  <style>
+    body {
+      background-color: #080a0f;
+      color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* --- Fundo Animado Esportivo --- */
+    .bg-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #0f1923 0%, #05070a 100%);
+    }
+
+    .floating-item {
+      position: absolute;
+      font-weight: 900;
+      user-select: none;
+      animation: floatAround linear infinite;
+    }
+
+    .item-neon {
+      color: #00ffcc;
+      text-shadow: 0 0 20px rgba(0, 255, 204, 0.6), 0 0 40px rgba(0, 255, 204, 0.3);
+    }
+
+    .item-blue {
+      color: #00a2ff;
+      text-shadow: 0 0 20px rgba(0, 162, 255, 0.6), 0 0 40px rgba(0, 162, 255, 0.3);
+    }
+
+    .item-white {
+      color: #ffffff;
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    }
+
+    @keyframes floatAround {
+      0% { transform: translateY(105vh) rotate(0deg) scale(0.9); opacity: 0; }
+      15% { opacity: 0.7; }
+      85% { opacity: 0.7; }
+      100% { transform: translateY(-20vh) rotate(360deg) scale(1.2); opacity: 0; }
+    }
+
+    .screen {
+      display: none;
+      width: 1200px;
+      max-width: 98vw;
+      background: rgba(15, 22, 32, 0.94);
+      backdrop-filter: blur(12px);
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.9), 0 0 20px rgba(0, 255, 204, 0.15);
+      border: 1px solid rgba(0, 255, 204, 0.2);
+      text-align: center;
+      box-sizing: border-box;
+      position: relative;
+      z-index: 1;
+    }
+
+    .screen.active { display: block; }
+
+    h2 {
+      color: #00ffcc;
+      font-size: 28px;
+      margin-top: 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    input[type="text"] {
+      width: 80%;
+      max-width: 400px;
+      padding: 14px;
+      font-size: 18px;
+      border-radius: 8px;
+      border: 1px solid #00ffcc;
+      background: #121924;
+      color: white;
+      margin-bottom: 20px;
+      text-align: center;
+      outline: none;
+    }
+
+    .btn-start, .btn-restart {
+      background: linear-gradient(135deg, #00ffcc, #00a2ff);
+      color: #05070a;
+      border: none;
+      padding: 14px 35px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0, 255, 204, 0.4);
+      transition: transform 0.2s;
+      text-transform: uppercase;
+    }
+
+    .btn-start:hover, .btn-restart:hover {
+      transform: scale(1.05);
+    }
+
+    .game-container {
+      position: relative;
+      width: 100%;
+      background: #000;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .header-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    video { 
+      width: 100%; 
+      max-height: 75vh;
+      display: block; 
+      object-fit: contain;
+    }
+
+    /* CAMADA TRANSPARENTE: Sem escurecer o vídeo */
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .overlay.active { opacity: 1; pointer-events: auto; }
+
+    .timer-circle {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #00ffcc;
+      color: #05070a;
+      font-size: 38px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 25px rgba(0, 255, 204, 0.9), 0 0 10px rgba(0,0,0,0.8);
+      animation: pulseTimer 1s infinite alternate;
+      margin-top: 10px;
+    }
+
+    @keyframes pulseTimer {
+      from { transform: scale(1); }
+      to { transform: scale(1.08); }
+    }
+
+    .options-container {
+      display: flex;
+      gap: 20px;
+      width: 100%;
+      justify-content: center;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    .btn-option {
+      background: rgba(18, 25, 36, 0.9);
+      color: white;
+      border: 2px solid #00ffcc;
+      padding: 16px 28px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(4px);
+      transition: background 0.2s, transform 0.1s, border-color 0.2s;
+    }
+
+    .btn-option:hover {
+      background: #00ffcc;
+      color: #05070a;
+      transform: scale(1.03);
+    }
+
+    .feedback-banner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      padding: 25px 40px;
+      font-size: 28px;
+      font-weight: bold;
+      border-radius: 12px;
+      text-transform: uppercase;
+      display: none;
+      z-index: 10;
+      box-shadow: 0 0 30px rgba(0,0,0,0.9);
+      text-align: center;
+    }
+
+    .feedback-correct { background-color: #00c853; color: white; }
+    .feedback-wrong { background-color: #d50000; color: white; }
+
+    .correct-answer-detail {
+      font-size: 20px;
+      display: block;
+      margin-top: 8px;
+      color: #ffeb3b;
+      font-weight: normal;
+      text-transform: none;
+    }
+
+    .saving-status { font-size: 15px; color: #aaa; margin-top: 15px; }
+  </style>
+</head>
+<body>
+
+  <!-- ELEMENTOS FLUTUANTES -->
+  <div class="bg-animation">
+    <div class="floating-item item-neon"  style="left: 5%; font-size: 90px; animation-duration: 11s;">⚽</div>
+    <div class="floating-item item-white" style="left: 20%; font-size: 80px; animation-duration: 15s;">⚡</div>
+    <div class="floating-item item-blue"  style="left: 38%; font-size: 100px; animation-duration: 13s;">🎯</div>
+    <div class="floating-item item-neon"  style="left: 55%; font-size: 85px; animation-duration: 16s;">🏆</div>
+    <div class="floating-item item-blue"  style="left: 72%; font-size: 95px; animation-duration: 12s;">📋</div>
+    <div class="floating-item item-white" style="left: 88%; font-size: 80px; animation-duration: 14s;">⚽</div>
+  </div>
+
+  <!-- TELA 1: CADASTRO DO ATLETA -->
+  <div id="startScreen" class="screen active">
+    <h2>Treinamento de Tomada de Decisão</h2>
+    <p>Digite seu nome completo para iniciar o teste de leitura tática (7 lances):</p>
+    <input type="text" id="athleteName" placeholder="Nome Completo do Atleta" required>
+    <br>
+    <button class="btn-start" onclick="iniciarTeste()">Iniciar Treino</button>
+  </div>
+
+  <!-- TELA 2: VÍDEO E DECISÃO TÁTICA -->
+  <div id="gameScreen" class="screen">
+    <div class="header-info">
+      <div>Atleta: <span id="displayName" style="color: #00ffcc;"></span></div>
+      <div>Pergunta: <span id="displayQuestion" style="color: #ffeb3b;">1 / 7</span></div>
+      <div>Pontuação: <span id="displayScore" style="color: #00a2ff;">0</span> pts</div>
+    </div>
+
+    <div class="game-container">
+      <video id="player" controls playsinline webkit-playsinline>
+        <source src="https://github.com/soaresHG/atletas/releases/download/v1.0.0/atleta_avaliacao.mp4" type="video/mp4">
+      </video>
+
+      <!-- Camada de Decisão Transparente -->
+      <div id="decisionOverlay" class="overlay">
+        <div id="timer" class="timer-circle">10</div>
+        <div class="options-container" id="optionsContainer"></div>
+      </div>
+
+      <div id="feedback" class="feedback-banner"></div>
+    </div>
+  </div>
+
+  <!-- TELA 3: RELATÓRIO FINAL -->
+  <div id="endScreen" class="screen">
+    <h2>Relatório de Desempenho Tático</h2>
+    <div>
+      <p>Atleta: <strong id="finalName"></strong></p>
+      <p>Pontuação Final: <strong id="finalScore" style="color: #00ffcc;"></strong> / 70 pontos</p>
+      <p>Acertos: <strong id="finalHits" style="color: #00a2ff;"></strong> de 7 perguntas</p>
+    </div>
+    <p id="savingStatus" class="saving-status">Enviando dados de desempenho para o treinador...</p>
+    <br>
+    <button class="btn-restart" onclick="reiniciarTeste()">Novo Treinamento</button>
+  </div>
+
+  <script>
+    const URL_GOOGLE_SCRIPT = "https://script.google.com/macros/s/AKfycbzLpEZYsWf1yGnDp3JhXTUz2UvgiKgC5G54YWc-PDlxrJUOxHnLAd06ggvBrZHepAB4sg/exec";
+
+    // --- TEMPOS EM QUE AS OPÇÕES DEVE APARECER NA TELA (EM SEGUNDOS) ---
+    const perguntas = [
+      {
+        gatilho: 7.10, // 07seg06
+        opcoes: [
+          { texto: "Opção A - Pergunta 1", correta: true },
+          { texto: "Opção B - Pergunta 1", correta: false }
+        ]
+      },
+      {
+        gatilho: 37.06, // 37seg04
+        opcoes: [
+          { texto: "Opção A - Pergunta 2", correta: true },
+          { texto: "Opção B - Pergunta 2", correta: false }
+        ]
+      },
+      {
+        gatilho: 64.23, // 1min04seg14
+        opcoes: [
+          { texto: "Opção A - Pergunta 3", correta: false },
+          { texto: "Opção B - Pergunta 3", correta: true }
+        ]
+      },
+      {
+        gatilho: 80.15, // 1min20seg09
+        opcoes: [
+          { texto: "Opção A - Pergunta 4", correta: true },
+          { texto: "Opção B - Pergunta 4", correta: false }
+        ]
+      },
+      {
+        gatilho: 121.20, // 2min01seg12
+        opcoes: [
+          { texto: "Opção A - Pergunta 5", correta: false },
+          { texto: "Opção B - Pergunta 5", correta: true }
+        ]
+      },
+      {
+        gatilho: 133.18, // 2min13seg11
+        opcoes: [
+          { texto: "Opção A - Pergunta 6", correta: true },
+          { texto: "Opção B - Pergunta 6", correta: false }
+        ]
+      },
+      {
+        gatilho: 146.16, // 2min26seg10
+        opcoes: [
+          { texto: "Opção A - Pergunta 7", correta: true },
+          { texto: "Opção B - Pergunta 7", correta: false }
+        ]
+      }
+    ];
+
+    let nomeAtleta = "";
+    let pontuacao = 0;
+    let acertos = 0;
+    let perguntaAtual = 0;
+    const PONTOS_POR_ACERTO = 10;
+
+    const TEMPO_LIMITE = 10; // As opções duram 10s na tela
+    let tempoRestante = TEMPO_LIMITE;
+    let timerInterval = null;
+    let aguardandoResposta = false;
+
+    const player = document.getElementById('player');
+    const overlay = document.getElementById('decisionOverlay');
+    const timerElement = document.getElementById('timer');
+    const feedback = document.getElementById('feedback');
+    const optionsContainer = document.getElementById('optionsContainer');
+
+    // --- GERADOR DE ÁUDIO DO RELÓGIO (Web Audio API) ---
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function playTickSound(highPitch = false) {
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      const clickOsc = audioCtx.createOscillator();
+      const clickGain = audioCtx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(highPitch ? 1200 : 900, now);
+
+      gain.gain.setValueAtTime(1.0, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+      clickOsc.type = 'square';
+      clickOsc.frequency.setValueAtTime(highPitch ? 2500 : 2000, now);
+
+      clickGain.gain.setValueAtTime(0.8, now);
+      clickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      clickOsc.connect(clickGain);
+      clickGain.connect(audioCtx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.12);
+
+      clickOsc.start(now);
+      clickOsc.stop(now + 0.03);
+    }
+
+    function iniciarTeste() {
+      initAudio();
+      const nameInput = document.getElementById('athleteName').value;
+      if (!nameInput.trim()) {
+        alert("Por favor, digite o nome do atleta!");
+        return;
+      }
+
+      nomeAtleta = nameInput;
+      pontuacao = 0;
+      acertos = 0;
+      perguntaAtual = 0;
+
+      document.getElementById('displayName').innerText = nomeAtleta;
+      document.getElementById('displayScore').innerText = pontuacao;
+      document.getElementById('displayQuestion').innerText = `1 / ${perguntas.length}`;
+
+      document.getElementById('startScreen').classList.remove('active');
+      document.getElementById('gameScreen').classList.add('active');
+
+      player.currentTime = 0;
+      player.play();
+    }
+
+    // Monitora o vídeo SEM congelar a imagem
+    player.addEventListener('timeupdate', () => {
+      if (perguntaAtual < perguntas.length && !aguardandoResposta) {
+        const pAtual = perguntas[perguntaAtual];
+        if (player.currentTime >= pAtual.gatilho) {
+          iniciarFaseDecisao(); // Exibe as opções, mas NÃO chama player.pause()
+        }
+      }
+    });
+
+    // Quando o vídeo termina
+    player.addEventListener('ended', () => {
+      if (perguntaAtual >= perguntas.length) {
+        finalizarEEnviar();
+      }
+    });
+
+    function iniciarFaseDecisao() {
+      aguardandoResposta = true;
+      const q = perguntas[perguntaAtual];
+
+      optionsContainer.innerHTML = "";
+      q.opcoes.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = "btn-option";
+        btn.innerText = opt.texto;
+        btn.onclick = () => processarResposta(opt.correta, opt.texto);
+        optionsContainer.appendChild(btn);
+      });
+
+      overlay.classList.add('active');
+      tempoRestante = TEMPO_LIMITE;
+      timerElement.innerText = tempoRestante;
+      playTickSound(tempoRestante <= 3);
+
+      timerInterval = setInterval(() => {
+        tempoRestante--;
+        timerElement.innerText = tempoRestante;
+
+        if (tempoRestante > 0) {
+          playTickSound(tempoRestante <= 3);
+        } else {
+          clearInterval(timerInterval);
+          processarResposta(false, "Tempo Esgotado");
+        }
+      }, 1000);
+    }
+
+    function processarResposta(isCorreta, respostaEscolhida) {
+      clearInterval(timerInterval);
+      overlay.classList.remove('active');
+      feedback.style.display = 'block';
+
+      const q = perguntas[perguntaAtual];
+      const opcaoCorretaObj = q.opcoes.find(o => o.correta);
+      const textoCorreto = opcaoCorretaObj ? opcaoCorretaObj.texto : "";
+
+      if (isCorreta) {
+        pontuacao += PONTOS_POR_ACERTO;
+        acertos++;
+        document.getElementById('displayScore').innerText = pontuacao;
+        feedback.className = "feedback-banner feedback-correct";
+        feedback.innerText = "Excelente Decisão!";
+      } else {
+        feedback.className = "feedback-banner feedback-wrong";
+        const motivo = tempoRestante <= 0 ? "Tempo Esgotado!" : "Decisão Incorreta!";
+        feedback.innerHTML = `${motivo}<span class="correct-answer-detail">Melhor opção: <strong>${textoCorreto}</strong></span>`;
+      }
+
+      setTimeout(() => {
+        feedback.style.display = 'none';
+        perguntaAtual++;
+
+        if (perguntaAtual < perguntas.length) {
+          document.getElementById('displayQuestion').innerText = `${perguntaAtual + 1} / ${perguntas.length}`;
+          aguardandoResposta = false; // Libera o sistema para a próxima pergunta
+        } else {
+          // Se já passou pelas 7 perguntas, aguarda o final do vídeo ou finaliza
+          aguardandoResposta = false;
+        }
+      }, 2000);
+    }
+
+    function finalizarEEnviar() {
+      document.getElementById('gameScreen').classList.remove('active');
+      document.getElementById('endScreen').classList.add('active');
+      
+      document.getElementById('finalName').innerText = nomeAtleta;
+      document.getElementById('finalScore').innerText = pontuacao;
+      document.getElementById('finalHits').innerText = acertos;
+
+      if (URL_GOOGLE_SCRIPT !== "SUA_URL_DO_GOOGLE_SCRIPT_AQUI") {
+        fetch(URL_GOOGLE_SCRIPT, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            nome: nomeAtleta,
+            pontos: pontuacao,
+            acertos: acertos
+          })
+        })
+        .then(() => {
+          document.getElementById('savingStatus').innerText = "✓ Resultado enviado ao relatório da comissão!";
+          document.getElementById('savingStatus').style.color = "#00ffcc";
+        })
+        .catch(() => {
+          document.getElementById('savingStatus').innerText = "Erro ao conectar com o banco de dados.";
+          document.getElementById('savingStatus').style.color = "#ff5252";
+        });
+      } else {
+        document.getElementById('savingStatus').innerText = "Adicione a URL do Apps Script para salvar no Sheets.";
+      }
+    }
+
+    function reiniciarTeste() {
+      aguardandoResposta = false;
+      perguntaAtual = 0;
+      document.getElementById('athleteName').value = "";
+      document.getElementById('savingStatus').innerText = "Enviando dados de desempenho para o treinador...";
+      document.getElementById('savingStatus').style.color = "#aaa";
+      document.getElementById('endScreen').classList.remove('active');
+      document.getElementById('startScreen').classList.add('active');
+    }
+  </script>
+</body>
+</html>
